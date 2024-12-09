@@ -64,7 +64,6 @@ pub struct BoxedMessage {
     /// A serialized message for a remote actor, accessed only by the `RemoteActorRuntime`
     #[cfg(feature = "cluster")]
     pub serialized_msg: Option<SerializedMessage>,
-    pub(crate) span: Option<tracing::Span>,
 }
 
 impl std::fmt::Debug for BoxedMessage {
@@ -139,13 +138,11 @@ pub trait Message: Any + Send + Sized + 'static {
             Ok(BoxedMessage {
                 msg: None,
                 serialized_msg: Some(self.serialize()?),
-                span: None,
             })
         } else if pid.is_local() {
             Ok(BoxedMessage {
                 msg: Some(Box::new(self)),
                 serialized_msg: None,
-                span: Some(tracing::Span::current()),
             })
         } else {
             Err(BoxedDowncastErr)
@@ -158,7 +155,6 @@ pub trait Message: Any + Send + Sized + 'static {
     fn box_message(self, pid: &ActorId) -> Result<BoxedMessage, BoxedDowncastErr> {
         Ok(BoxedMessage {
             msg: Some(Box::new(self)),
-            span: Some(tracing::Span::current()),
         })
     }
 
